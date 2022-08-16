@@ -3,6 +3,7 @@ __pycache__/*
 */__pycache__/*
 
 # desk-alert
+chromedriver.exe
 config.py
 *.log
 *.db
