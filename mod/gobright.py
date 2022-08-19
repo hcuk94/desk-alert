@@ -109,5 +109,5 @@ class GoBright:
             return count_desk
         else:
             logging.error("An error occurred while retrieving availability.")
-            return None
+            return 0
 
