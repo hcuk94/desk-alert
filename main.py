@@ -17,6 +17,7 @@ if __name__ == "__main__":
     db_driver = database.Database()
     gb_driver = gobright.GoBright()
     while True:
+        logging.info("Starting checks...")
         pending_checks = db_driver.checks_pending()
 
         for check in pending_checks:
@@ -24,8 +25,8 @@ if __name__ == "__main__":
 
             # Verify whether the entry has expired
             datetime_obj = datetime.datetime.strptime(check_datetime, '%Y-%m-%d %H:%M')
-            datetime_exp = datetime_obj + datetime.timedelta(0, 7200)
-            if datetime_obj < datetime_exp:
+            datetime_exp = datetime_obj + datetime.timedelta(hours=config.expire_check_after_hours)
+            if datetime.datetime.utcnow() > datetime_exp:
                 db_driver.expire_check(check[0])
 
             # Check Availability
@@ -35,7 +36,7 @@ if __name__ == "__main__":
                     print(f"A desk was found on {check_datetime}!")
                     db_driver.fulfill_check(check_id)
 
-            sleep(60)
+        sleep(config.seconds_to_sleep)
 
 
 
