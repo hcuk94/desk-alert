@@ -76,6 +76,7 @@ class GoBright:
         """Return full availability for desk search"""
         if not self.is_auth():
             self.re_auth()
+        datetime_str = datetime.datetime.strftime(date_time, '%Y-%m-%d %H:%M')
         req_url = self.api_baseurl + "api/v2.0/spaces/desks/availability"
         req_head = {
             'Authorization': "Bearer " + self.api_token
@@ -83,7 +84,7 @@ class GoBright:
         req_body = {
               "timeZone": "Europe/London",
               "locationId": self.location_id,
-              "dateTime": date_time,
+              "dateTime": datetime_str,
               "duration": duration * 60,
               "spaceType": 1,
               "capacity": 1,
@@ -96,18 +97,32 @@ class GoBright:
             logging.error(f"API Communication error: {error}")
             return None
 
-    def num_desks(self, date_time, duration):
-        """Returns the number of available desks for a search criteria"""
-        avail = self.availability(date_time, duration)
-        if avail is not None:
-            locations = avail['data']['locations']
-            count_loc = len(locations)
-            count_desk = 0
-            if count_loc > 0:
-                for location in locations:
-                    count_desk += len(location['spaces'])
-            return count_desk
-        else:
-            logging.error("An error occurred while retrieving availability.")
-            return 0
-
+    def book_desk(self, desk_id, date_time, duration):
+        if not self.is_auth():
+            self.re_auth()
+        start_time_str = str(date_time)
+        end_time = date_time + datetime.timedelta(hours=duration)
+        end_time_str = str(end_time)
+        req_url = self.api_baseurl + "api/v2.0/bookings/"
+        req_head = {
+            'Authorization': "Bearer " + self.api_token
+        }
+        req_body = {
+            "startIanaTimeZone": "Europe/London",
+            "endIanaTimeZone": "Europe/London",
+            "start": start_time_str,
+            "end": end_time_str,
+            "subject": "Desk booking",
+            "spaceIds": [desk_id],
+            "bookingType": 2,
+            "recurrenceModificationMode": 0,
+            "recurrenceType": 0,
+            "sensitivity": 0
+        }
+        try:
+            req = requests.post(req_url, headers=req_head, json=req_body)
+            req_resp = req.json()
+            return req_resp
+        except (ConnectionError, requests.exceptions.ConnectTimeout) as error:
+            logging.error(f"API Communication error: {error}")
+            return None
